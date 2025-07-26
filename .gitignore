@@ -1,0 +1,23 @@
+# Unity auto-generated folders
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+
+# Visual Studio / Rider
+*.csproj
+*.sln
+*.user
+*.unityproj
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git LFS locks
+*.psd filter=lfs diff=lfs merge=lfs -text
+*.png filter=lfs diff=lfs merge=lfs -text
+*.fbx filter=lfs diff=lfs merge=lfs -text
