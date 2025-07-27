@@ -603,13 +603,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 961739749}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalRotation: {x: 0.6427876, y: 0, z: 0, w: 0.7660445}
   m_LocalPosition: {x: 0.89, y: 31.55, z: 0.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 80, y: 0, z: 0}
 --- !u!114 &961739754
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -623,14 +623,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraPanZoom
   panSpeed: 20
-  zoomSpeed: 500
   mousePanSensitivity: 1
   velocitySensitivityMultiplier: 0.1
   maxVelocityBoost: 3
-  minZoom: 5
-  maxZoom: 50
   panLimitX: {x: -50, y: 50}
   panLimitZ: {x: -50, y: 50}
+  zoomSpeed: 500
+  minZoom: 5
+  maxZoom: 50
+  topDownRotation: {x: 90, y: 0, z: 0}
+  groundLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  defaultOrbitDistance: 10
 --- !u!1001 &1095523482
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -118,6 +118,24 @@ public partial class @CameraControls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""RightMouseHold"",
+                    ""type"": ""Button"",
+                    ""id"": ""82f5ede1-9d7c-455b-b812-242d7db879b1"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""MouseDelta"",
+                    ""type"": ""Value"",
+                    ""id"": ""4e8e1ee9-02bc-4e2a-a55f-f34ca4ae68f7"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
                 }
             ],
             ""bindings"": [
@@ -252,6 +270,28 @@ public partial class @CameraControls: IInputActionCollection2, IDisposable
                     ""action"": ""MiddleMouseDrag"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""8a43127f-19b1-44df-a77a-ef70b6c2c560"",
+                    ""path"": ""<Mouse>/rightButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""RightMouseHold"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""3c889192-d8ca-42a1-b000-2f0d269b6f5c"",
+                    ""path"": ""<Mouse>/delta"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""MouseDelta"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -263,6 +303,8 @@ public partial class @CameraControls: IInputActionCollection2, IDisposable
         m_Camera_Pan = m_Camera.FindAction("Pan", throwIfNotFound: true);
         m_Camera_Zoom = m_Camera.FindAction("Zoom", throwIfNotFound: true);
         m_Camera_MiddleMouseDrag = m_Camera.FindAction("MiddleMouseDrag", throwIfNotFound: true);
+        m_Camera_RightMouseHold = m_Camera.FindAction("RightMouseHold", throwIfNotFound: true);
+        m_Camera_MouseDelta = m_Camera.FindAction("MouseDelta", throwIfNotFound: true);
     }
 
     ~@CameraControls()
@@ -346,6 +388,8 @@ public partial class @CameraControls: IInputActionCollection2, IDisposable
     private readonly InputAction m_Camera_Pan;
     private readonly InputAction m_Camera_Zoom;
     private readonly InputAction m_Camera_MiddleMouseDrag;
+    private readonly InputAction m_Camera_RightMouseHold;
+    private readonly InputAction m_Camera_MouseDelta;
     /// <summary>
     /// Provides access to input actions defined in input action map "Camera".
     /// </summary>
@@ -369,6 +413,14 @@ public partial class @CameraControls: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Camera/MiddleMouseDrag".
         /// </summary>
         public InputAction @MiddleMouseDrag => m_Wrapper.m_Camera_MiddleMouseDrag;
+        /// <summary>
+        /// Provides access to the underlying input action "Camera/RightMouseHold".
+        /// </summary>
+        public InputAction @RightMouseHold => m_Wrapper.m_Camera_RightMouseHold;
+        /// <summary>
+        /// Provides access to the underlying input action "Camera/MouseDelta".
+        /// </summary>
+        public InputAction @MouseDelta => m_Wrapper.m_Camera_MouseDelta;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -404,6 +456,12 @@ public partial class @CameraControls: IInputActionCollection2, IDisposable
             @MiddleMouseDrag.started += instance.OnMiddleMouseDrag;
             @MiddleMouseDrag.performed += instance.OnMiddleMouseDrag;
             @MiddleMouseDrag.canceled += instance.OnMiddleMouseDrag;
+            @RightMouseHold.started += instance.OnRightMouseHold;
+            @RightMouseHold.performed += instance.OnRightMouseHold;
+            @RightMouseHold.canceled += instance.OnRightMouseHold;
+            @MouseDelta.started += instance.OnMouseDelta;
+            @MouseDelta.performed += instance.OnMouseDelta;
+            @MouseDelta.canceled += instance.OnMouseDelta;
         }
 
         /// <summary>
@@ -424,6 +482,12 @@ public partial class @CameraControls: IInputActionCollection2, IDisposable
             @MiddleMouseDrag.started -= instance.OnMiddleMouseDrag;
             @MiddleMouseDrag.performed -= instance.OnMiddleMouseDrag;
             @MiddleMouseDrag.canceled -= instance.OnMiddleMouseDrag;
+            @RightMouseHold.started -= instance.OnRightMouseHold;
+            @RightMouseHold.performed -= instance.OnRightMouseHold;
+            @RightMouseHold.canceled -= instance.OnRightMouseHold;
+            @MouseDelta.started -= instance.OnMouseDelta;
+            @MouseDelta.performed -= instance.OnMouseDelta;
+            @MouseDelta.canceled -= instance.OnMouseDelta;
         }
 
         /// <summary>
@@ -485,5 +549,19 @@ public partial class @CameraControls: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnMiddleMouseDrag(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "RightMouseHold" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnRightMouseHold(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "MouseDelta" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnMouseDelta(InputAction.CallbackContext context);
     }
 }
