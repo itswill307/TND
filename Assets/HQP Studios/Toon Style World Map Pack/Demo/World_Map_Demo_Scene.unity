@@ -623,7 +623,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraPanZoom
   panSpeed: 20
-  zoomSpeed: 300
+  zoomSpeed: 500
   mousePanSensitivity: 1
   velocitySensitivityMultiplier: 0.1
   maxVelocityBoost: 3
