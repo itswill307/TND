@@ -1,2 +1,2 @@
-# TND
-The New Diplorder
+# The Suzerain Order
+TNO + Suzerain
