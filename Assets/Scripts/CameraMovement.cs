@@ -4,7 +4,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class CameraPanZoom : MonoBehaviour
+public class CameraMovement : MonoBehaviour
 {
     [Header("Pan Settings")]
     public float panSpeed = 20f; // Speed of camera panning
@@ -20,19 +20,28 @@ public class CameraPanZoom : MonoBehaviour
     public float maxZoom = 50f; // Maximum zoom distance
 
     [Header("Rotation Settings")]
-    public Vector3 topDownRotation = new Vector3(90f, 0f, 0f); // Top-down view rotation (Euler angles)
     public LayerMask groundLayerMask = -1; // What layers to consider as "ground" for orbit point
     public float defaultOrbitDistance = 10f; // Default distance if no ground is hit
-
+    public float rotationSensitivity = 0.2f; // Speed of camera rotation
+    
+    // Input System
     private CameraControls controls; // Reference to the generated Input Actions class
+    
+    // Input Values
     private Vector2 panInput; // Stores input for panning
-    private Vector2 mouseDelta; // Stores mouse movement for middle mouse panning
+    private Vector2 mouseDelta; // Stores mouse movement for middle mouse panning and rotation
     private float zoomInput; // Stores input for zooming
+    
+    // Input States
     private bool isMiddleMouseHeld = false; // Tracks if the middle mouse button is held
+    private bool isRightMouseHeld = false; // Tracks if the right mouse button is held
+    
+    // Rotation State
     private bool isRightMouseRotating = false; // Tracks if we're in rotation mode
     private Vector3 rotationCenter; // Point to rotate around
-    private float orbitDistance = 10f; // Distance from rotation center
-
+    private float orbitDistance; // Distance from rotation center
+    
+    // Camera Reference
     private Camera mainCamera;
 
     private void Awake()
@@ -48,14 +57,21 @@ public class CameraPanZoom : MonoBehaviour
         controls.Camera.Zoom.performed += ctx => zoomInput = ctx.ReadValue<float>();
         controls.Camera.Zoom.canceled += ctx => zoomInput = 0f;
 
+        // Bind the Mouse Delta action for rotation and panning
+        controls.Camera.MouseDelta.performed += ctx => mouseDelta = ctx.ReadValue<Vector2>();
+        controls.Camera.MouseDelta.canceled += ctx => mouseDelta = Vector2.zero;
+
         // Bind the Middle Mouse Drag action
         controls.Camera.MiddleMouseDrag.started += ctx => isMiddleMouseHeld = true;
         controls.Camera.MiddleMouseDrag.canceled += ctx => isMiddleMouseHeld = false;
 
-        // Mouse delta for rotation will be read directly in RotateCamera() method
+        // Bind the Right Mouse Hold action
+        controls.Camera.RightMouseHold.started += ctx => isRightMouseHeld = true;
+        controls.Camera.RightMouseHold.canceled += ctx => isRightMouseHeld = false;
 
         mainCamera = Camera.main;
-        transform.rotation = Quaternion.Euler(85f, transform.rotation.eulerAngles.y, transform.rotation.eulerAngles.z);
+
+        transform.rotation = Quaternion.Euler(85f, 0f, 0f);
     }
 
     private void OnEnable()
@@ -70,16 +86,14 @@ public class CameraPanZoom : MonoBehaviour
 
     private void Update()
     {
-        // Handle right mouse rotation with direct input (simple and reliable)
-        bool rightMousePressed = Mouse.current.rightButton.isPressed;
-        
+        // Handle right mouse rotation using Input Actions
         // Start rotation
-        if (rightMousePressed && !isRightMouseRotating)
+        if (isRightMouseHeld && !isRightMouseRotating)
         {
             StartRotation();
         }
         // Stop rotation
-        else if (!rightMousePressed && isRightMouseRotating)
+        else if (!isRightMouseHeld && isRightMouseRotating)
         {
             StopRotation();
         }
@@ -94,120 +108,6 @@ public class CameraPanZoom : MonoBehaviour
         HandleZooming();
     }
     
-    private void StartRotation()
-    {
-        isRightMouseRotating = true;
-        
-        // Set rotation center from screen center
-        Ray ray = mainCamera.ScreenPointToRay(new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0f));
-        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, groundLayerMask))
-        {
-            rotationCenter = hit.point;
-        }
-        else
-        {
-            rotationCenter = transform.position + transform.forward * defaultOrbitDistance;
-        }
-        
-        // Store the distance for returning to top-down view
-        orbitDistance = Vector3.Distance(transform.position, rotationCenter);
-        
-        // Ensure minimum distance
-        if (orbitDistance < 1f)
-        {
-            orbitDistance = defaultOrbitDistance;
-        }
-    }
-    
-    private void UpdateRotation()
-    {
-        // Get mouse movement
-        Vector2 mouseDelta = Mouse.current.delta.ReadValue();
-        
-        // Early exit if no mouse movement
-        if (mouseDelta.magnitude < 0.01f)
-        {
-            return;
-        }
-        
-        // Store current position to check rotation limits
-        Vector3 currentOffset = transform.position - rotationCenter;
-        float currentDistance = currentOffset.magnitude;
-        
-        // Debug: Show offset and distance calculation
-        Debug.Log($"Camera pos: {transform.position}, Rotation center: {rotationCenter}");
-        Debug.Log($"Current offset: {currentOffset}, Distance: {currentDistance}");
-        Debug.Log($"Offset.y / Distance ratio: {currentOffset.y / currentDistance}");
-        
-        // Calculate current pitch angle (0 = horizontal, 90 = straight down)
-        float currentPitch = Mathf.Asin(Mathf.Clamp(currentOffset.y / currentDistance, -1f, 1f)) * Mathf.Rad2Deg;
-        Debug.Log($"Current pitch: {currentPitch} degrees");
-        
-        // Horizontal rotation (yaw) around world Y-axis - always allow this
-        if (Mathf.Abs(mouseDelta.x) > 0.01f)
-        {
-            transform.RotateAround(rotationCenter, Vector3.up, mouseDelta.x * 0.2f);
-            Debug.Log($"Applied horizontal rotation: {mouseDelta.x * 0.2f}");
-        }
-        
-        // Vertical rotation (pitch) with limits to prevent gimbal lock
-        if (Mathf.Abs(mouseDelta.y) > 0.01f)
-        {
-            // Store the original position in case we need to revert
-            Vector3 originalPosition = transform.position;
-            Quaternion originalRotation = transform.rotation;
-            
-            // Try the rotation
-            Vector3 right = transform.right;
-            transform.RotateAround(rotationCenter, right, -mouseDelta.y * 0.2f);
-            
-            // Check the new angle after rotation
-            Vector3 newOffset = transform.position - rotationCenter;
-            float newDistance = newOffset.magnitude;
-            float newPitch = Mathf.Asin(Mathf.Clamp(newOffset.y / newDistance, -1f, 1f)) * Mathf.Rad2Deg;
-            
-            Debug.Log($"After rotation - New pitch: {newPitch} degrees");
-            
-            // If the new angle is unsafe, revert the rotation
-            if (newPitch < 20f || newPitch > 85f)
-            {
-                Debug.Log($"Unsafe angle {newPitch}, reverting rotation");
-                transform.position = originalPosition;
-                transform.rotation = originalRotation;
-            }
-            else
-            {
-                Debug.Log($"Applied vertical rotation - new pitch: {newPitch}");
-            }
-        }
-        
-        // Safer LookAt that avoids gimbal lock
-        Vector3 directionToCenter = (rotationCenter - transform.position).normalized;
-        if (Vector3.Dot(directionToCenter, Vector3.up) < 0.99f) // Avoid looking straight up/down
-        {
-            transform.LookAt(rotationCenter, Vector3.up);
-        }
-    }
-    
-    private void StopRotation()
-    {
-        isRightMouseRotating = false;
-        
-        // Return to 85-degree view instead of 90 to stay well under limit
-        // Simple approach: start with pure top-down, then add horizontal offset for 85°
-        Vector3 pureTopDown = rotationCenter + Vector3.up * orbitDistance;
-        
-        // Add backward offset to make it 85° instead of 90°
-        // This moves the camera backward from pure vertical (tilting back 5 degrees)
-        Vector3 smallOffset = Vector3.back * (orbitDistance * 0.087f); // ~5 degree offset for 85°
-        Vector3 nearTopDownPosition = pureTopDown + smallOffset;
-        
-        transform.position = nearTopDownPosition;
-        
-        // Set rotation to look at the center
-        transform.LookAt(rotationCenter, Vector3.up);
-    }
-
     private void HandlePanning()
     {
         // Handle keyboard panning
@@ -218,8 +118,6 @@ public class CameraPanZoom : MonoBehaviour
         // Handle middle mouse panning with velocity-based sensitivity
         if (isMiddleMouseHeld)
         {
-            mouseDelta = Mouse.current.delta.ReadValue();
-
             // Calculate mouse velocity (magnitude of delta)
             float mouseVelocity = mouseDelta.magnitude;
 
@@ -252,18 +150,100 @@ public class CameraPanZoom : MonoBehaviour
 
     private void HandleZooming()
     {
-        // Handle zooming with increased speed
-        float zoom = mainCamera.orthographic ? mainCamera.orthographicSize : mainCamera.fieldOfView;
+        // Handle zooming by adjusting field of view
+        float zoom = mainCamera.fieldOfView;
         zoom -= zoomInput * zoomSpeed * Time.deltaTime;
         zoom = Mathf.Clamp(zoom, minZoom, maxZoom);
+        
+        mainCamera.fieldOfView = zoom;
+    }
 
-        if (mainCamera.orthographic)
+    private void StartRotation()
+    {
+        isRightMouseRotating = true;
+
+        // Set rotation center from screen center
+        Ray ray = mainCamera.ScreenPointToRay(new Vector3(Screen.width * 0.5f, Screen.height * 0.5f, 0f));
+        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, groundLayerMask))
         {
-            mainCamera.orthographicSize = zoom;
+            rotationCenter = hit.point;
         }
         else
         {
-            mainCamera.fieldOfView = zoom;
+            rotationCenter = transform.position + transform.forward * defaultOrbitDistance;
         }
+
+        // Store the distance for returning to top-down view
+        orbitDistance = Vector3.Distance(transform.position, rotationCenter);
+
+        // Ensure minimum distance
+        if (orbitDistance < 1f)
+        {
+            orbitDistance = defaultOrbitDistance;
+        }
+    }
+    
+    private void UpdateRotation()
+    {
+        // Early exit if no mouse movement
+        if (mouseDelta.magnitude < 0.01f)
+        {
+            return;
+        }
+        
+        // Store current position to check rotation limits
+        Vector3 currentOffset = transform.position - rotationCenter;
+        float currentDistance = currentOffset.magnitude;
+        
+        // Horizontal rotation (yaw) around world Y-axis - always allow this
+        if (Mathf.Abs(mouseDelta.x) > 0.01f)
+        {
+            transform.RotateAround(rotationCenter, Vector3.up, mouseDelta.x * rotationSensitivity);
+        }
+        
+        // Vertical rotation (pitch) with limits to prevent gimbal lock
+        if (Mathf.Abs(mouseDelta.y) > 0.01f)
+        {
+            // Store the original position in case we need to revert
+            Vector3 originalPosition = transform.position;
+            Quaternion originalRotation = transform.rotation;
+            
+            // Try the rotation
+            Vector3 right = transform.right;
+            transform.RotateAround(rotationCenter, right, -mouseDelta.y * rotationSensitivity);
+            
+            // Check the new angle after rotation
+            Vector3 newOffset = transform.position - rotationCenter;
+            float newDistance = newOffset.magnitude;
+            float newPitch = Mathf.Asin(Mathf.Clamp(newOffset.y / newDistance, -1f, 1f)) * Mathf.Rad2Deg;
+            
+            // If the new angle is unsafe, revert the rotation
+            if (newPitch < 20f || newPitch > 85f)
+            {
+                transform.position = originalPosition;
+                transform.rotation = originalRotation;
+            }
+        }
+    }
+    
+    private void StopRotation()
+    {
+        isRightMouseRotating = false;
+        
+        // Calculate position for 85-degree angle facing the rotation center
+        // Convert 85 degrees to radians for calculation
+        float angleInRadians = 85f * Mathf.Deg2Rad;
+        
+        // Calculate offset from rotation center for 85-degree view
+        // Y component based on sine of angle, horizontal distance based on cosine
+        float horizontalDistance = orbitDistance * Mathf.Cos(angleInRadians);
+        float verticalHeight = orbitDistance * Mathf.Sin(angleInRadians);
+        
+        // Position camera at calculated offset (facing south, so offset is on negative Z-axis)
+        Vector3 targetPosition = rotationCenter + new Vector3(0f, verticalHeight, -horizontalDistance);
+        transform.position = targetPosition;
+        
+        // Make camera look at the rotation center
+        transform.LookAt(rotationCenter, Vector3.up);
     }
 }

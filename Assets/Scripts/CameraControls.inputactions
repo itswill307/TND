@@ -25,6 +25,15 @@
                     "initialStateCheck": true
                 },
                 {
+                    "name": "MouseDelta",
+                    "type": "Value",
+                    "id": "4e8e1ee9-02bc-4e2a-a55f-f34ca4ae68f7",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
                     "name": "MiddleMouseDrag",
                     "type": "Button",
                     "id": "57033fc6-54b3-42d6-96ce-4f10695e077a",
@@ -41,15 +50,6 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
-                },
-                {
-                    "name": "MouseDelta",
-                    "type": "Value",
-                    "id": "4e8e1ee9-02bc-4e2a-a55f-f34ca4ae68f7",
-                    "expectedControlType": "Vector2",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": true
                 }
             ],
             "bindings": [

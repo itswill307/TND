@@ -111,6 +111,15 @@ public partial class @CameraControls: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": true
                 },
                 {
+                    ""name"": ""MouseDelta"",
+                    ""type"": ""Value"",
+                    ""id"": ""4e8e1ee9-02bc-4e2a-a55f-f34ca4ae68f7"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                },
+                {
                     ""name"": ""MiddleMouseDrag"",
                     ""type"": ""Button"",
                     ""id"": ""57033fc6-54b3-42d6-96ce-4f10695e077a"",
@@ -127,15 +136,6 @@ public partial class @CameraControls: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""MouseDelta"",
-                    ""type"": ""Value"",
-                    ""id"": ""4e8e1ee9-02bc-4e2a-a55f-f34ca4ae68f7"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true
                 }
             ],
             ""bindings"": [
@@ -302,9 +302,9 @@ public partial class @CameraControls: IInputActionCollection2, IDisposable
         m_Camera = asset.FindActionMap("Camera", throwIfNotFound: true);
         m_Camera_Pan = m_Camera.FindAction("Pan", throwIfNotFound: true);
         m_Camera_Zoom = m_Camera.FindAction("Zoom", throwIfNotFound: true);
+        m_Camera_MouseDelta = m_Camera.FindAction("MouseDelta", throwIfNotFound: true);
         m_Camera_MiddleMouseDrag = m_Camera.FindAction("MiddleMouseDrag", throwIfNotFound: true);
         m_Camera_RightMouseHold = m_Camera.FindAction("RightMouseHold", throwIfNotFound: true);
-        m_Camera_MouseDelta = m_Camera.FindAction("MouseDelta", throwIfNotFound: true);
     }
 
     ~@CameraControls()
@@ -387,9 +387,9 @@ public partial class @CameraControls: IInputActionCollection2, IDisposable
     private List<ICameraActions> m_CameraActionsCallbackInterfaces = new List<ICameraActions>();
     private readonly InputAction m_Camera_Pan;
     private readonly InputAction m_Camera_Zoom;
+    private readonly InputAction m_Camera_MouseDelta;
     private readonly InputAction m_Camera_MiddleMouseDrag;
     private readonly InputAction m_Camera_RightMouseHold;
-    private readonly InputAction m_Camera_MouseDelta;
     /// <summary>
     /// Provides access to input actions defined in input action map "Camera".
     /// </summary>
@@ -410,6 +410,10 @@ public partial class @CameraControls: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Zoom => m_Wrapper.m_Camera_Zoom;
         /// <summary>
+        /// Provides access to the underlying input action "Camera/MouseDelta".
+        /// </summary>
+        public InputAction @MouseDelta => m_Wrapper.m_Camera_MouseDelta;
+        /// <summary>
         /// Provides access to the underlying input action "Camera/MiddleMouseDrag".
         /// </summary>
         public InputAction @MiddleMouseDrag => m_Wrapper.m_Camera_MiddleMouseDrag;
@@ -417,10 +421,6 @@ public partial class @CameraControls: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Camera/RightMouseHold".
         /// </summary>
         public InputAction @RightMouseHold => m_Wrapper.m_Camera_RightMouseHold;
-        /// <summary>
-        /// Provides access to the underlying input action "Camera/MouseDelta".
-        /// </summary>
-        public InputAction @MouseDelta => m_Wrapper.m_Camera_MouseDelta;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -453,15 +453,15 @@ public partial class @CameraControls: IInputActionCollection2, IDisposable
             @Zoom.started += instance.OnZoom;
             @Zoom.performed += instance.OnZoom;
             @Zoom.canceled += instance.OnZoom;
+            @MouseDelta.started += instance.OnMouseDelta;
+            @MouseDelta.performed += instance.OnMouseDelta;
+            @MouseDelta.canceled += instance.OnMouseDelta;
             @MiddleMouseDrag.started += instance.OnMiddleMouseDrag;
             @MiddleMouseDrag.performed += instance.OnMiddleMouseDrag;
             @MiddleMouseDrag.canceled += instance.OnMiddleMouseDrag;
             @RightMouseHold.started += instance.OnRightMouseHold;
             @RightMouseHold.performed += instance.OnRightMouseHold;
             @RightMouseHold.canceled += instance.OnRightMouseHold;
-            @MouseDelta.started += instance.OnMouseDelta;
-            @MouseDelta.performed += instance.OnMouseDelta;
-            @MouseDelta.canceled += instance.OnMouseDelta;
         }
 
         /// <summary>
@@ -479,15 +479,15 @@ public partial class @CameraControls: IInputActionCollection2, IDisposable
             @Zoom.started -= instance.OnZoom;
             @Zoom.performed -= instance.OnZoom;
             @Zoom.canceled -= instance.OnZoom;
+            @MouseDelta.started -= instance.OnMouseDelta;
+            @MouseDelta.performed -= instance.OnMouseDelta;
+            @MouseDelta.canceled -= instance.OnMouseDelta;
             @MiddleMouseDrag.started -= instance.OnMiddleMouseDrag;
             @MiddleMouseDrag.performed -= instance.OnMiddleMouseDrag;
             @MiddleMouseDrag.canceled -= instance.OnMiddleMouseDrag;
             @RightMouseHold.started -= instance.OnRightMouseHold;
             @RightMouseHold.performed -= instance.OnRightMouseHold;
             @RightMouseHold.canceled -= instance.OnRightMouseHold;
-            @MouseDelta.started -= instance.OnMouseDelta;
-            @MouseDelta.performed -= instance.OnMouseDelta;
-            @MouseDelta.canceled -= instance.OnMouseDelta;
         }
 
         /// <summary>
@@ -543,6 +543,13 @@ public partial class @CameraControls: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnZoom(InputAction.CallbackContext context);
         /// <summary>
+        /// Method invoked when associated input action "MouseDelta" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnMouseDelta(InputAction.CallbackContext context);
+        /// <summary>
         /// Method invoked when associated input action "MiddleMouseDrag" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
@@ -556,12 +563,5 @@ public partial class @CameraControls: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnRightMouseHold(InputAction.CallbackContext context);
-        /// <summary>
-        /// Method invoked when associated input action "MouseDelta" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnMouseDelta(InputAction.CallbackContext context);
     }
 }
