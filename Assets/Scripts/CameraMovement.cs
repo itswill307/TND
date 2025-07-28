@@ -14,7 +14,10 @@ public class CameraMovement : MonoBehaviour
     [Header("Zoom Settings")]
     public float zoomSpeed = 500f; // Speed of zooming
     public float minZoom = 5f; // Minimum zoom distance
-    public float maxZoom = 50f; // Maximum zoom distance
+    public float maxZoom = 60f; // Maximum zoom distance
+    
+    [Header("View Limits")]
+    public float maxViewWidth = 62f; // Maximum view width in world units
 
     [Header("Rotation Settings")]
     public LayerMask groundLayerMask = -1; // What layers to consider as "ground" for orbit point
@@ -40,6 +43,10 @@ public class CameraMovement : MonoBehaviour
     
     // Camera Reference
     private Camera mainCamera;
+    
+    // Height calculation cache
+    private float cachedAspectRatio;
+    private float cachedMaxHeight;
 
     private void Awake()
     {
@@ -69,6 +76,10 @@ public class CameraMovement : MonoBehaviour
         mainCamera = Camera.main;
 
         transform.rotation = Quaternion.Euler(85f, 0f, 0f);
+        
+        // Initialize height calculation cache
+        cachedAspectRatio = mainCamera.aspect;
+        cachedMaxHeight = GetMaxHeightForViewWidth(maxViewWidth, 60f);
     }
 
     private void OnEnable()
@@ -103,6 +114,7 @@ public class CameraMovement : MonoBehaviour
         
         HandlePanning();
         HandleZooming();
+        LimitCameraHeight();
     }
     
     private void HandlePanning()
@@ -153,6 +165,31 @@ public class CameraMovement : MonoBehaviour
         zoom = Mathf.Clamp(zoom, minZoom, maxZoom);
         
         mainCamera.fieldOfView = zoom;
+    }
+
+    private void LimitCameraHeight()
+    {
+        // Only recalculate if aspect ratio has changed
+        if (Mathf.Abs(mainCamera.aspect - cachedAspectRatio) > 0.001f)
+        {
+            cachedAspectRatio = mainCamera.aspect;
+            cachedMaxHeight = GetMaxHeightForViewWidth(maxViewWidth, 60f);
+        }
+        
+        // Always set camera height to cached max height
+        Vector3 pos = transform.position;
+        pos.y = cachedMaxHeight;
+        transform.position = pos;
+    }
+
+    private float GetMaxHeightForViewWidth(float desiredWidth, float fixedFov)
+    {
+        // For perspective camera: viewWidth = 2 * height * tan(FOV/2) * aspectRatio
+        // Solving for height: height = viewWidth / (2 * tan(FOV/2) * aspectRatio)
+        // Using fixed FOV of 60 degrees instead of current camera FOV
+        float halfFovRad = fixedFov * 0.5f * Mathf.Deg2Rad;
+        float aspectRatio = mainCamera.aspect;
+        return desiredWidth / (2f * Mathf.Tan(halfFovRad) * aspectRatio);
     }
 
     private void StartRotation()
