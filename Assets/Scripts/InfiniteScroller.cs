@@ -1,84 +1,93 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class InfiniteScroller : MonoBehaviour
 {
-    [Tooltip("Drag your 5 chunk Transforms here, in left‑to‑right order")]
-    public Transform[] chunks;
+    [Tooltip("Your N chunk Transforms, initially laid out side‑by‑side along +X.")]
+    public List<Transform> chunks;
 
-    [Tooltip("Width of each chunk in world units")]
+    [Tooltip("Width of each chunk in world units along X.")]
     public float chunkWidth = 12.4f;
 
-    private int leftIndex, rightIndex;
-    private Transform cam;
+    [Tooltip("The object whose X‑position drives the scroll (e.g. your camera).")]
+    public Transform driver;
+    
+    [Tooltip("Camera's horizontal view distance (buffer for fast panning)")]
+    public float cameraViewWidth = 62f;
+
+    // derived values
+    float totalWidth;
+    float halfRingWidth;
+    bool isSetupComplete = false;
+
+    // single ghost copy per chunk
+    List<Transform> ghosts = new List<Transform>();
 
     void Start()
     {
-        if (chunks.Length == 0)
-        {
-            Debug.LogError("No chunks assigned!");
-            enabled = false;
+        if (chunks == null || chunks.Count == 0 || driver == null)
             return;
-        }
 
-        cam = Camera.main.transform;
+        totalWidth   = chunks.Count * chunkWidth;
+        halfRingWidth = totalWidth * 0.5f;
 
-        // Debug: Show all chunk positions
-        Debug.Log("=== CHUNK POSITIONS DEBUG ===");
-        for (int i = 0; i < chunks.Length; i++)
+        // 1) Lay out the original chunks in a row centered on driver.x
+        float startX = driver.position.x - (totalWidth - chunkWidth) * 0.5f;
+        for (int i = 0; i < chunks.Count; i++)
         {
-            Debug.Log($"Chunk {i} ({chunks[i].name}): Local=({chunks[i].localPosition.x:F2}, {chunks[i].localPosition.y:F2}, {chunks[i].localPosition.z:F2}), World=({chunks[i].position.x:F2}, {chunks[i].position.y:F2}, {chunks[i].position.z:F2})");
+            Vector3 p = chunks[i].position;
+            p.x = startX + i * chunkWidth;
+            chunks[i].position = p;
         }
-        Debug.Log($"Parent object position: ({transform.position.x:F2}, {transform.position.y:F2}, {transform.position.z:F2})");
 
-        leftIndex  = 0;
-        rightIndex = chunks.Length - 1;
+        // 2) Create one ghost copy for each chunk
+        foreach (var c in chunks)
+        {
+            var ghost = Instantiate(c.gameObject, c.position + Vector3.right * totalWidth, c.rotation, transform).transform;
+            // optional: disable scripts/colliders on ghosts so only visuals remain
+            foreach (var comp in ghost.GetComponents<MonoBehaviour>()) comp.enabled = false;
+            ghosts.Add(ghost);
+        }
         
-        // Debug.Log($"Initialized chunks. Left: {chunks[leftIndex].name} at X={chunks[leftIndex].position.x}, Right: {chunks[rightIndex].name} at X={chunks[rightIndex].position.x}");
+        isSetupComplete = true;
     }
 
     void Update()
     {
-        float camX = cam.position.x;
-
-        // If camera has moved far enough right, recycle the leftmost chunk to the right
-        if (camX > chunks[rightIndex].position.x - chunkWidth * 0.5f)
-            RepositionLeftToRight();
-
-        // If camera has moved far enough left, recycle the rightmost chunk to the left
-        if (camX < chunks[leftIndex].position.x + chunkWidth * 0.5f)
-            RepositionRightToLeft();
-    }
-
-    void RepositionLeftToRight()
-    {
-        // grab the leftmost chunk…
-        Transform t = chunks[leftIndex];
-        // …and move it exactly one chunkWidth to the right of the current rightmost
-        Vector3 newPos = t.position;
-        newPos.x = chunks[rightIndex].position.x + chunkWidth;
-        t.position = newPos;
-
-        // Debug.Log($"Moved {t.name} from left to right. New position: X={newPos.x}");
-
-        // update our indices
-        rightIndex = leftIndex;
-        leftIndex  = (leftIndex + 1) % chunks.Length;
+        if (chunks == null || driver == null || !isSetupComplete) return;
         
-        // Debug.Log($"New indices - Left: {leftIndex} ({chunks[leftIndex].name}), Right: {rightIndex} ({chunks[rightIndex].name})");
-    }
-
-    void RepositionRightToLeft()
-    {
-        Transform t = chunks[rightIndex];
-        Vector3 newPos = t.position;
-        newPos.x = chunks[leftIndex].position.x - chunkWidth;
-        t.position = newPos;
-
-        // Debug.Log($"Moved {t.name} from right to left. New position: X={newPos.x}");
-
-        leftIndex  = rightIndex;
-        rightIndex = (rightIndex - 1 + chunks.Length) % chunks.Length;
+        // Additional safety check - ensure all chunks and ghosts exist
+        if (chunks.Count == 0 || ghosts.Count != chunks.Count) return;
         
-        // Debug.Log($"New indices - Left: {leftIndex} ({chunks[leftIndex].name}), Right: {rightIndex} ({chunks[rightIndex].name})");
+        float dx = driver.position.x;
+        
+        // Expand boundaries by camera view width for fast panning
+        float bufferZone = cameraViewWidth * 0.5f;
+        float leftBound  = dx - halfRingWidth - bufferZone;
+        float rightBound = dx + halfRingWidth + bufferZone;
+
+        // 3) Wrap chunks when they move past the ring boundary
+        for (int i = 0; i < chunks.Count; i++)
+        {
+            var chunk = chunks[i];
+            var ghost = ghosts[i];
+            
+            float chunkLeftEdge  = chunk.position.x - (chunkWidth * 0.5f);
+            float chunkRightEdge = chunk.position.x + (chunkWidth * 0.5f);
+
+            // if original chunk is entirely to the left of the ring, send it right
+            if (chunkRightEdge < leftBound)
+            {
+                chunk.position += Vector3.right * totalWidth;
+            }
+            // if original chunk is entirely to the right of the ring, send it left  
+            else if (chunkLeftEdge > rightBound)
+            {
+                chunk.position += Vector3.left * totalWidth;
+            }
+
+            // 4) Keep ghost positioned one totalWidth ahead of original
+            ghost.position = chunk.position + Vector3.right * totalWidth;
+        }
     }
 }

@@ -8,7 +8,6 @@ public class CameraMovement : MonoBehaviour
     public float mousePanSensitivity = 1f; // Base multiplier for mouse panning sensitivity
     public float velocitySensitivityMultiplier = 0.1f; // How much velocity affects sensitivity
     public float maxVelocityBoost = 3f; // Maximum sensitivity boost from velocity
-    public Vector2 panLimitX = new Vector2(-50f, 50f); // Horizontal pan limits
     public Vector2 panLimitZ = new Vector2(-50f, 50f); // Vertical pan limits
 
     [Header("Zoom Settings")]
@@ -150,7 +149,6 @@ public class CameraMovement : MonoBehaviour
         }
 
         // Clamp the camera position to stay within the pan limits
-        position.x = Mathf.Clamp(position.x, panLimitX.x, panLimitX.y);
         position.z = Mathf.Clamp(position.z, panLimitZ.x, panLimitZ.y);
 
         // Apply the new position to the camera
